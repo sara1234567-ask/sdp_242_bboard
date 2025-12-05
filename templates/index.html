@@ -1,0 +1,5 @@
+{% if bb.rubric %}
+    <a href="{% url 'by_rubric' bb.rubric.pk %}">{{ bb.rubric.name }}</a>
+{% else %}
+    <span> рубрики</span>
+{% endif %}

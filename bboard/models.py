@@ -1,6 +1,39 @@
-from django.db import models
+from symtable import Class
+from wsgiref.validate import validator
+from xml.dom import ValidationErr
 
 from django.db import models
+from django.core import validators
+
+
+from django.db import models
+def get_min_length():
+    min_length=4
+    return min_length
+
+
+def validate_even(val):
+    if val % 2 != 0:
+        raise ValidationError('Число %(value)s нечётное',
+                              code='odd',
+                              params={'value': val})
+
+
+from django.core.exceptions import ValidationError
+
+class MinMaxValueValidator:
+    def __init__(self, min_value, max_value):
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def __call__(self, val):
+        if val < self.min_value or val > self.max_value:
+            raise ValidationError(
+                'Введенное число должно находиться в диапазоне '
+                'от %(min)s до %(max)s',
+                code='out_of_range',
+                params={'min': self.min_value, 'max': self.max_value},
+            )
 
 class Rubric(models.Model):
     name = models.CharField(
@@ -40,11 +73,17 @@ class Bb(models.Model):
     title = models.CharField(
         max_length=50,
         verbose_name='Товар',
+        validators=[
+        validators.RegexValidator(regex=r'^.{4,}$',),
+        #validators.MinLengthValidator(get_min_length),
+    ],
+        error_messages={'invalid': 'Неправильное название'}
     )
     content = models.TextField(
         null=True,
         blank=True,
         verbose_name='Описание',
+
     )
     price = models.DecimalField(
         max_digits=13,
@@ -52,6 +91,7 @@ class Bb(models.Model):
         null=True,
         blank=True,
         verbose_name='Цена',
+        validators=[validate_even],
     )
     published = models.DateTimeField(
         auto_now_add=True,
@@ -87,7 +127,24 @@ class Bb(models.Model):
 
     title_and_price.short_description = 'название и цена'
 
+    from django.core.exceptions import ValidationError
 
+
+    class YourModel(models.Model):
+        content = models.TextField()
+        price = models.IntegerField()
+
+        def clean(self):
+            errors = {}
+
+            if not self.content:
+                errors['content'] = ValidationError('Укажите описание')
+
+            if self.price and self.price < 0:
+                errors['price'] = ValidationError('Укажите неотрицательное значение цены')
+
+            if errors:
+                raise ValidationError(errors)
 
     class Meta:
         verbose_name = 'Объявление'

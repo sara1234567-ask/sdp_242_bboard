@@ -1,0 +1,56 @@
+{% extends 'layout/basic.html' %}
+
+{% block content %}
+
+    {% if bbs %}
+        {% for bb in bbs %}
+        <div>
+            <h2>
+                <a href="{% url 'bboard:detail' pk=bb.pk %}">{{ bb.title }}</a>
+            </h2>
+            <p>{{ bb.content }}</p>
+            <p>
+                <a href="{% url 'bboard:by_rubric' bb.rubric.pk %}">{{ bb.rubric.name }}</a>
+            </p>
+            <p>{{ bb.published|date:"d.m.Y H:i:s" }}</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <h2>Объявлений нет</h2>
+    {% endif %}
+
+    {% if page.has_other_pages %}
+    <nav aria-label="pagination">
+        <ul class="pagination">
+
+            {% if page.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page.previous_page_number }}">&lt;</a>
+            </li>
+            {% endif %}
+
+            {% for p in page.paginator.page_range %}
+                {% if page.number == p %}
+                    <li class="page-item active">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page.next_page_number }}">&gt;</a>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+
+{% endblock %}

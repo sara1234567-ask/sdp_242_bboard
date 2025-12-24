@@ -1,0 +1,15 @@
+{% extends 'layout/basic.html' %}
+
+{% block title %}Изменение объявления{% endblock %}
+
+{% block content %}
+
+    <h1>Изменение объявления</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Изменить</button>
+    </form>
+
+{% endblock %}

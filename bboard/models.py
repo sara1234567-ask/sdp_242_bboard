@@ -1,59 +1,18 @@
-from django.core import validators
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.exceptions import ValidationError
 
-
-def get_min_length():
-    min_length = 4
-    # Вычисления
-    return
-
-def validate_even(val):
-    if val % 2 != 0:
-        raise ValidationError('Число %(value)s нечётное',
-                              code='odd',
-                              params={'value': val})
-
-
-class MinMaxValueValidator:
-    def __init__(self, min_value, max_value):
-        self.min_value = min_value
-        self.max_value = max_value
-
-    def __call__(self, val):
-        if val < self.min_value or val > self.max_value:
-            raise ValidationError(
-                'Введённое число должно находиться в диапазоне'
-                'от %(min)s до %(max)s',
-                code='out_of_range',
-                params={'min': self.min_value, 'max': self.max_value},
-            )
-
-
+# Валидация для цены (неотрицательное число)
+def validate_positive_or_zero(value):
+    if value < 0:
+        raise ValidationError(f'{value} должно быть положительным или 0')
 
 class Rubric(models.Model):
-    name = models.CharField(
-        max_length=20,
-        db_index=True,
-        verbose_name='Название',
-    )
+    name = models.CharField(max_length=50, verbose_name='Рубрика')
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name = 'Рубрика'
-        verbose_name_plural = 'Рубрики'
-        ordering = ('name',)
-
-
 class Bb(models.Model):
-    # KINDS = (
-    #     ('b', 'Куплю'),
-    #     ('s', 'Продам'),
-    #     ('c', 'Обменяю'),
-    # )
-
     KINDS = (
         ('Купля-продажа', (
             ('b', 'Куплю'),
@@ -63,13 +22,6 @@ class Bb(models.Model):
             ('c', 'Обменяю'),
         ))
     )
-
-    # KINDS = (
-    #     (None, 'Выберите тип публикуемого объявления'),
-    #     ('b', 'Куплю'),
-    #     ('s', 'Продам'),
-    #     ('c', 'Обменяю'),
-    # )
 
     kind = models.CharField(
         max_length=1,
@@ -81,11 +33,6 @@ class Bb(models.Model):
     title = models.CharField(
         max_length=50,
         verbose_name='Товар',
-        validators=[
-            validators.RegexValidator(regex=r'^.{4,}$',),
-            # validators.MinLengthValidator(get_min_length),
-        ],
-        error_messages={'invalid': 'Введите 4 или более символов'}
     )
 
     content = models.TextField(
@@ -100,7 +47,7 @@ class Bb(models.Model):
         null=True,
         blank=True,
         verbose_name='Цена',
-        validators=[validate_even],
+        validators=[validate_positive_or_zero],
     )
 
     published = models.DateTimeField(
@@ -110,9 +57,7 @@ class Bb(models.Model):
     )
 
     rubric = models.ForeignKey(
-        # Rubric,
         'Rubric',
-        # 'bboard.Rubric',
         null=True,
         on_delete=models.PROTECT,
         verbose_name='Рубрика',
@@ -120,14 +65,6 @@ class Bb(models.Model):
 
     def __str__(self):
         return f'Объявление: {self.title}'
-
-    # def save(self, *args, **kwargs):
-    #     if self.is_model_correct():
-    #         super().save(*args, **kwargs)
-    #
-    # def delete(self, *args, **kwargs):
-    #     if self.need_to_delete():
-    #         super().delete(*args, **kwargs)
 
     # Функциональное поле
     def title_and_price(self):
@@ -137,20 +74,20 @@ class Bb(models.Model):
 
     title_and_price.short_description = 'Название и цена'
 
-    def clean(self):
-        errors = {}
-        if not self.content:
-            errors['content'] = ValidationError(
-                'Укажите описание продаваемого товара'
-            )
+    # Классный метод для обновления заголовков
+    @classmethod
+    def update_titles(cls):
+        for bb in cls.objects.all():
+            bb.title = f"{bb.title} ({bb.id})"
+            bb.save()
 
-        if self.price and self.price < 0:
-            errors['price'] = ValidationError(
-                'Укажите неотрицательное значение цены'
-            )
-
-        if errors:
-            raise ValidationError(errors)
+    # Классный метод для удаления записей с нечётной цифрой в заголовке
+    @classmethod
+    def delete_odd_titles(cls):
+        for bb in cls.objects.all():
+            digits = [int(c) for c in bb.title if c.isdigit()]
+            if any(d % 2 != 0 for d in digits):
+                bb.delete()
 
     class Meta:
         verbose_name = 'Объявление'

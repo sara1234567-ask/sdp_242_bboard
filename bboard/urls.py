@@ -7,7 +7,7 @@ urlpatterns = [
     path('edit/<int:pk>/', BbEditView.as_view(), name='edit'),
     path('delete/<int:pk>/', BbDeleteView.as_view(), name='delete'),
 
-    # --- новые пути для домашки №10 ---
+
     path('update_titles/', update_titles_view, name='update_titles'),
     path('delete_odd/', delete_odd_titles_view, name='delete_odd_titles'),
 

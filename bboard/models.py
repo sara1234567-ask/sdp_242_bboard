@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
-# Валидация для цены (неотрицательное число)
+
 def validate_positive_or_zero(value):
     if value < 0:
         raise ValidationError(f'{value} должно быть положительным или 0')
@@ -66,7 +66,7 @@ class Bb(models.Model):
     def __str__(self):
         return f'Объявление: {self.title}'
 
-    # Функциональное поле
+
     def title_and_price(self):
         if self.price:
             return f'{self.title} ({self.price})'
@@ -74,14 +74,14 @@ class Bb(models.Model):
 
     title_and_price.short_description = 'Название и цена'
 
-    # Классный метод для обновления заголовков
+
     @classmethod
     def update_titles(cls):
         for bb in cls.objects.all():
             bb.title = f"{bb.title} ({bb.id})"
             bb.save()
 
-    # Классный метод для удаления записей с нечётной цифрой в заголовке
+
     @classmethod
     def delete_odd_titles(cls):
         for bb in cls.objects.all():
